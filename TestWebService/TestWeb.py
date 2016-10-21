@@ -3,6 +3,8 @@
    config - to import settings for test execution
 """
 import requests
+
+import RequestsLogger
 import config
 
 
@@ -14,9 +16,10 @@ class TestWeb(object):
 
     url = config.url
 
+    @RequestsLogger.log_decorator
     def authorize(self, user_expected, password_expected,
                   user_actual, password_actual):
-        """Returns status code after successful or unsuccessful authorization
+        """Returns response of authorization request
 
         Arguments:
         user_expected -- user name specified in URL
@@ -28,13 +31,14 @@ class TestWeb(object):
         auth_response = requests.get(request_url, auth=(user_actual, password_actual))
         return auth_response
 
+    @RequestsLogger.log_decorator
     def get_request(self):
-        """Returns status code and content of the page"""
+        """Returns response of get request"""
 
         get_response = requests.get(self.url + "/get")
-        get_content = get_response.content
-        return get_response, get_content
+        return get_response
 
+    @RequestsLogger.stream_log_decorator
     def stream_request(self, lines_number):
         """Returns status code and content of the page
         as well as request information to be logged
@@ -43,8 +47,5 @@ class TestWeb(object):
         n -- number of lines to be shown
         """
 
-        stream_log = requests.get(self.url + "/stream/1")
         stream_response = requests.get(self.url + "/stream/" + str(lines_number))
-
-        str_content = stream_response.content
-        return stream_log, stream_response, str_content
+        return stream_response

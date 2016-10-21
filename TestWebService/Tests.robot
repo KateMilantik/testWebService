@@ -11,11 +11,10 @@ Documentation    Suit for testing /get, /basic-auth and /stream
 *** Test Cases ***
 Test get header
     [Documentation]    Checks a header in /get response
-    ${response}  ${content} =   Get Request
-    ${header_host} =       Get Json Value  ${content}  ${header}
+    ${response} =   Get Request
+    ${header_host} =       Get Json Value  ${response.content}  ${header}
     Common Check    ${response}
     Should Contain    ${header_host}    httpbin.org
-    Write Log          ${response}
 
 Test authorization
     [Documentation]    Checks status code while trying to authorize
@@ -31,12 +30,11 @@ Test authorization
 
 Test stream
     [Documentation]    Checks the number of lines in /stream response
-    ${lines_num_expected}    Set Variable    2
-    ${stream_log}  ${response}    ${content} =     Stream Request    ${lines_num_expected}
-    ${lines_num_actual} =     Get Line Count   ${content}
+    ${lines_num_expected}    Set Variable    5
+    ${response} =     Stream Request    ${lines_num_expected}
+    ${lines_num_actual} =     Get Line Count   ${response.content}
     Common Check  ${response}
     Should Be Equal As Integers   ${lines_num_actual}     ${lines_num_expected}
-    Write Log          ${stream_log}
 
 *** Keywords ***
 Authorization with valid creds should result in OK status code
@@ -45,4 +43,3 @@ Authorization with valid creds should result in OK status code
     [Arguments]    ${user1}    ${pass1}    ${user2}    ${pass2}    ${status}
     ${response} =    Authorize      ${user1}       ${pass1}      ${user2}       ${pass2}
     Check Status Code    ${status}    ${response}
-    Write Log          ${response}

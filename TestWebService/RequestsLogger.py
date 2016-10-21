@@ -10,23 +10,7 @@ Library for logging request and response, which based on [ http://docs.python-re
 """
 
 
-def write_log(response):
-    """
-    Logging of http-request and response
-
-    *Args:*\n
-    _response_ - object [ http://docs.python-requests.org/en/latest/api/#requests.Response | "Response" ]
-
-    *Responce:*\n
-    Formatted output of request and response in test log
-
-    Example:
-    | *Test cases* | *Action*                          | *Argument*            | *Argument*                | *Argument*  |
-    | Simple Test  | RequestsLibrary.Create session    | Alias                 | http://www.example.com    |             |
-    |              | ${response}=                      | RequestsLibrary.Get request       | Alias         | /           |
-    |              | RequestsLogger.Write log          | ${response}           |                           |             |
-    """
-
+def _response_info(response):
     msg = []
     # информация о запросе
     msg.append(
@@ -44,7 +28,27 @@ def write_log(response):
     for res_key, res_value in response.headers.iteritems():
         msg.append('< {header_name}: {header_value}'.format(header_name=res_key,
                                                             header_value=res_value))
-    msg.append('<')
+    logger.info('\n'.join(msg))
+
+
+def write_log(response):
+    """
+    Logging of http-request and response
+
+    *Args:*\n
+    _response_ - object [ http://docs.python-requests.org/en/latest/api/#requests.Response | "Response" ]
+
+    *Responce:*\n
+    Formatted output of request and response in test log
+
+    Example:
+    | *Test cases* | *Action*                          | *Argument*            | *Argument*                | *Argument*  |
+    | Simple Test  | RequestsLibrary.Create session    | Alias                 | http://www.example.com    |             |
+    |              | ${response}=                      | RequestsLibrary.Get request       | Alias         | /           |
+    |              | RequestsLogger.Write log          | ${response}           |                           |             |
+    """
+
+    _response_info(response)
     # тело ответа
     converted_string = ''
     if response.content:
@@ -62,9 +66,8 @@ def write_log(response):
             converted_string = xml.toprettyxml()
         else:
             response_content = get_decoded_response_body(response.content, responce_content_type)
-            msg.append(response_content)
+            logger.info(response_content)
     # вывод сообщения в лог
-    logger.info('\n'.join(msg))
     if converted_string:
         logger.info(converted_string)
 
@@ -104,3 +107,25 @@ def log_decorator(func):
 
     func.cache = {}
     return decorator.decorator(_log_decorator, func)
+
+
+def write_stream_log(response):
+    _response_info(response)
+    splitted_content = response.content.splitlines()
+    for i in range(len(splitted_content)):
+        js = json.loads(splitted_content[i])
+        js = json.dumps(js, sort_keys=True,
+                        ensure_ascii=False, indent=4,
+                        separators=(',', ': '))
+        logger.info(js)
+
+
+def _stream_log_decorator(func, *args, **kwargs):
+    response = func(*args, **kwargs)
+    write_stream_log(response)
+    return response
+
+
+def stream_log_decorator(func):
+    func.cache = {}
+    return decorator.decorator(_stream_log_decorator, func)
