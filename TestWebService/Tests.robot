@@ -2,6 +2,8 @@
 Library    TestWeb
 Library	   HttpLibrary.HTTP
 Library    String
+Library    RequestsChecker
+Library    RequestsLogger
 Variables  json_paths.py
 Variables  status_codes.py
 Documentation    Suit for testing /get, /basic-auth and /stream
@@ -9,10 +11,11 @@ Documentation    Suit for testing /get, /basic-auth and /stream
 *** Test Cases ***
 Test get header
     [Documentation]    Checks a header in /get response
-    ${response}    ${status} =  Get Request
-    ${header_host} =       Get Json Value  ${response}  ${header}
+    ${response}  ${content} =   Get Request
+    ${header_host} =       Get Json Value  ${content}  ${header}
+    Common Check    ${response}
     Should Contain    ${header_host}    httpbin.org
-    Should Be Equal As Strings    ${status}    ${status_ok}
+    Write Log          ${response}
 
 Test authorization
     [Documentation]    Checks status code while trying to authorize
@@ -29,15 +32,17 @@ Test authorization
 Test stream
     [Documentation]    Checks the number of lines in /stream response
     ${lines_num_expected}    Set Variable    2
-    ${content}    ${status} =     Stream Request    ${lines_num_expected}
+    ${stream_log}  ${response}    ${content} =     Stream Request    ${lines_num_expected}
     ${lines_num_actual} =     Get Line Count   ${content}
+    Common Check  ${response}
     Should Be Equal As Integers   ${lines_num_actual}     ${lines_num_expected}
-    Should Be Equal As Strings    ${status}    ${status_ok}
+    Write Log          ${stream_log}
 
 *** Keywords ***
 Authorization with valid creds should result in OK status code
     [Documentation]    Takes pair of expected credentials and
     ...                pair of actual ones and expected status code
     [Arguments]    ${user1}    ${pass1}    ${user2}    ${pass2}    ${status}
-    ${result} =    Authorize      ${user1}       ${pass1}      ${user2}       ${pass2}
-    Should Be Equal As Strings    ${result}       ${status}
+    ${response} =    Authorize      ${user1}       ${pass1}      ${user2}       ${pass2}
+    Check Status Code    ${status}    ${response}
+    Write Log          ${response}

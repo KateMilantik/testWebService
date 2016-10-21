@@ -16,8 +16,7 @@ class TestWeb(object):
 
     def authorize(self, user_expected, password_expected,
                   user_actual, password_actual):
-        """Returns status code after successful or unsuccessful
-        authorization
+        """Returns status code after successful or unsuccessful authorization
 
         Arguments:
         user_expected -- user name specified in URL
@@ -26,26 +25,26 @@ class TestWeb(object):
         password_actual -- password entered into prompt window
         """
         request_url = self.url + "/basic-auth/" + user_expected + "/" + password_expected
-        auth_stat = requests.get(request_url,
-                                 auth=(user_actual, password_actual)).status_code
-        return auth_stat
+        auth_response = requests.get(request_url, auth=(user_actual, password_actual))
+        return auth_response
 
     def get_request(self):
         """Returns status code and content of the page"""
 
         get_response = requests.get(self.url + "/get")
-        get_cont = get_response.content
-        get_stat = get_response.status_code
-        return get_cont, get_stat
+        get_content = get_response.content
+        return get_response, get_content
 
     def stream_request(self, lines_number):
         """Returns status code and content of the page
+        as well as request information to be logged
 
         Arguments:
         n -- number of lines to be shown
         """
 
-        stream_response = requests.get(self.url + "/stream/" + lines_number)
-        str_cont = stream_response.content
-        str_stat = stream_response.status_code
-        return str_cont, str_stat
+        stream_log = requests.get(self.url + "/stream/1")
+        stream_response = requests.get(self.url + "/stream/" + str(lines_number))
+
+        str_content = stream_response.content
+        return stream_log, stream_response, str_content
